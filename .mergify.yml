@@ -1,0 +1,14 @@
+queue_rules:
+  - name: default
+    batch_size: 2
+    batch_max_wait_time: 30 s
+    merge_conditions:
+      - check-success=probe-ci
+
+pull_request_rules:
+  - name: queue on label
+    conditions:
+      - label=ready-to-merge
+    actions:
+      queue:
+
